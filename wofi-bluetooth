@@ -300,7 +300,7 @@ show_menu() {
 }
 
 # wofi command to pipe into, can add any options here
-wofi_command="wofi -d -i -p"
+wofi_command="wofi -d -i -k "/dev/null" -p"
 
 case "$1" in
     --status)
