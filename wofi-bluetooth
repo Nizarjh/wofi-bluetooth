@@ -18,6 +18,21 @@ _bluetoothctl() {
        | sed 's/\x1b\[[0-9;]*[a-zA-Z]//g; s/\r//g' \
        | grep -v -E '^\[.*\]>|^Waiting to connect|^Agent registered|^\[NEW\]|^\[DEL\]|^\[CHG\]|^$'
 }
+
+wait_for_state() {
+    local mac="$1"
+    local state="$2"
+    local expected="$3"
+
+    for i in {1..16}; do
+        if _bluetoothctl info "$mac" | grep -q "^$state: $expected"; then
+            return 0
+        fi
+        sleep 0.2
+    done
+
+    return 1
+}
 # Checks if bluetooth controller is powered on
 power_on() {
     if _bluetoothctl show | grep -q "Powered: yes"; then
@@ -34,7 +49,6 @@ toggle_power() {
         show_menu
     else
         _bluetoothctl power on
-        sleep 1
         show_menu
     fi
 }
@@ -121,9 +135,11 @@ device_connected() {
 toggle_connection() {
     if device_connected "$1"; then
         _bluetoothctl disconnect "$1"
+        wait_for_state "$mac" "Connected" "no"
         device_menu "$device"
     else
         _bluetoothctl connect "$1"
+        wait_for_state "$mac" "Connected" "yes"
         device_menu "$device"
     fi
 }
@@ -144,9 +160,11 @@ device_paired() {
 toggle_paired() {
     if device_paired "$1"; then
         _bluetoothctl remove "$1"
+        wait_for_state "$mac" "Paired" "no"
         device_menu "$device"
     else
         _bluetoothctl pair "$1"
+        wait_for_state "$mac" "Paired" "yes"
         device_menu "$device"
     fi
 }
@@ -167,9 +185,11 @@ device_trusted() {
 toggle_trust() {
     if device_trusted "$1"; then
         _bluetoothctl untrust "$1"
+        wait_for_state "$mac" "Trusted" "no"
         device_menu "$device"
     else
         _bluetoothctl trust "$1"
+        wait_for_state "$mac" "Trusted" "yes"
         device_menu "$device"
     fi
 }
