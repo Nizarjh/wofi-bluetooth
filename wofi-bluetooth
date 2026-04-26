@@ -46,9 +46,11 @@ power_on() {
 toggle_power() {
     if power_on; then
         _bluetoothctl power off
+        sleep 0.5 
         show_menu
     else
         _bluetoothctl power on
+        sleep 0.5 
         show_menu
     fi
 }
